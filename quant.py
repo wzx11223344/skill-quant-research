@@ -669,7 +669,14 @@ def run_backtest(strategy='ma_cross', symbol='000300',
 
 def _portfolio_volatility(weights, cov_matrix):
     """组合波动率"""
-    return np.sqrt(weights.T @ cov_matrix @ weights)
+    if cov_matrix is None or cov_matrix.size == 0:
+        return 1e10
+    if np.any(np.isnan(cov_matrix)) or np.any(np.isinf(cov_matrix)):
+        cov_matrix = np.nan_to_num(cov_matrix, nan=0.0, posinf=1.0, neginf=0.0)
+    result = weights.T @ cov_matrix @ weights
+    if result <= 0 or np.isnan(result):
+        return 1e10
+    return np.sqrt(result)
 
 
 def _negative_sharpe(weights, mean_ret, cov_matrix, rf=RISK_FREE_RATE):
